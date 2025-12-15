@@ -1,119 +1,105 @@
-<!DOCTYPE html>
-<html lang="id">
+<!DOCTYPE html><html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <title>Game Balap Kuda</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <style>
-    html, body {
-      margin: 0; padding: 0; overflow: hidden;
-      background: #2e7d32; font-family: Arial, sans-serif;
-    }
-    canvas { display: block; background: linear-gradient(#4caf50, #2e7d32); }
-    .ui {
-      position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
-      color: #fff; background: rgba(0,0,0,0.4);
-      padding: 8px 16px; border-radius: 20px; font-size: 14px;
-    }
-    .btn {
-      position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-      background: #ff9800; color: #000; font-weight: bold;
-      padding: 14px 28px; border-radius: 30px; border: none; font-size: 16px;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game Balap Kuda</title>
+<style>
+body { margin:0; font-family:Arial; background:#1e1e1e; color:#fff; text-align:center }
+#ui { padding:10px }
+button { padding:10px 16px; margin:5px; border:none; border-radius:6px; font-weight:bold }
+#start { background:#2ecc71 }
+#store { background:#9b59b6; color:#fff }
+#topup { background:#f1c40f }
+canvas { background:#2c3e50; display:block; margin:auto; border-radius:10px }
+</style>
 </head>
 <body>
-<canvas id="game"></canvas>
-<div class="ui" id="ui">Tap tombol untuk mulai balapan</div>
-<button class="btn" id="btn">START</button>
-
-<script>
+<div id="ui">
+  <div>💎 Diamond Ungu: <span id="diamond">0</span></div>
+  <button id="start">START BALAP</button>
+  <button id="store">STORE KOSTUM</button>
+  <button id="topup">TOP UP 💎 (Simulasi)</button>
+  <div id="info"></div>
+</div>
+<canvas id="game" width="360" height="500"></canvas><script>
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
-const ui = document.getElementById('ui');
-const btn = document.getElementById('btn');
+let diamond = 0;
+let race = false;
 
-function resize(){ canvas.width = innerWidth; canvas.height = innerHeight; }
-window.onresize = resize; resize();
-
-const FINISH_X = () => canvas.width - 100;
-
-let running = false;
-
+const player = { y: 420, x: 30, speed: 0, color: 'white', name:'PLAYER' };
 const horses = [
-  { name: 'Kuda Merah', color: '#e53935', y: 150, x: 50, speed: 0 },
-  { name: 'Kuda Biru', color: '#1e88e5', y: 250, x: 50, speed: 0 },
-  { name: 'Kuda Kuning', color: '#fdd835', y: 350, x: 50, speed: 0 },
-  { name: 'Kuda Hitam', color: '#212121', y: 450, x: 50, speed: 0 }
+  { y:100, x:30, speed:0, color:'red', name:'MERAH' },
+  { y:180, x:30, speed:0, color:'blue', name:'BIRU' },
+  { y:260, x:30, speed:0, color:'green', name:'HIJAU' },
+  player
 ];
 
-function resetRace() {
-  horses.forEach(h => { h.x = 50; h.speed = 0; });
-  running = false;
-  ui.textContent = 'Tap tombol untuk mulai balapan';
-  btn.textContent = 'START';
-}
-
-btn.onclick = () => {
-  if (!running) {
-    running = true;
-    btn.textContent = 'RESET';
-    ui.textContent = 'Balapan dimulai!';
-  } else {
-    resetRace();
-  }
+const costumes = {
+  gold:{ price:5, color:'gold' },
+  fire:{ price:8, color:'orange' },
+  neon:{ price:10, color:'#00ffff' }
 };
 
-function update() {
-  if (!running) return;
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  horses.forEach(h => {
-    h.speed += Math.random() * 0.4;
-    h.speed *= 0.95;
-    h.x += h.speed;
+  // finish line
+  ctx.strokeStyle='white';
+  ctx.beginPath(); ctx.moveTo(320,0); ctx.lineTo(320,500); ctx.stroke();
 
-    if (h.x >= FINISH_X()) {
-      running = false;
-      ui.textContent = `🏆 ${h.name} MENANG!`;
-    }
+  horses.forEach(h=>{
+    ctx.fillStyle=h.color;
+    ctx.fillRect(h.x,h.y,30,20);
+    ctx.fillStyle='white';
+    ctx.fillText(h.name,h.x,h.y-4);
   });
 }
 
-function drawTrack() {
-  ctx.fillStyle = '#795548';
-  ctx.fillRect(0, 100, canvas.width, canvas.height - 200);
-
-  ctx.strokeStyle = '#fff';
-  ctx.setLineDash([20, 20]);
-  for (let y = 200; y <= 500; y += 100) {
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+function update(){
+  if(race){
+    horses.forEach(h=>{
+      h.speed += Math.random()*0.3;
+      h.x += h.speed;
+      if(h.x>=300){
+        race=false;
+        document.getElementById('info').innerText='🏆 PEMENANG: '+h.name;
+      }
+    });
   }
-  ctx.setLineDash([]);
-
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(FINISH_X(), 100, 5, canvas.height - 200);
-}
-
-function drawHorse(h) {
-  ctx.fillStyle = h.color;
-  ctx.fillRect(h.x, h.y - 20, 60, 40);
-  ctx.fillStyle = '#fff';
-  ctx.font = '14px Arial';
-  ctx.fillText(h.name, h.x + 30, h.y - 30);
-}
-
-function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  drawTrack();
-  horses.forEach(drawHorse);
-}
-
-function loop() {
-  update();
   draw();
-  requestAnimationFrame(loop);
+  requestAnimationFrame(update);
 }
-loop();
-</script>
-</body>
+
+update();
+
+// UI
+start.onclick=()=>{
+  horses.forEach(h=>{ h.x=30; h.speed=0 });
+  document.getElementById('info').innerText='';
+  race=true;
+};
+
+store.onclick=()=>{
+  let txt='STORE KOSTUM:\n';
+  for(let k in costumes){ txt+=`${k} (${costumes[k].price}💎)\n`; }
+  const pilih = prompt(txt+'ketik nama kostum');
+  if(costumes[pilih]){
+    if(diamond>=costumes[pilih].price){
+      diamond-=costumes[pilih].price;
+      player.color=costumes[pilih].color;
+      alert('Kostum dipakai!');
+      document.getElementById('diamond').innerText=diamond;
+    } else alert('Diamond kurang');
+  }
+};
+
+topup.onclick=()=>{
+  const d = parseInt(prompt('Isi diamond (simulasi)'));
+  if(!isNaN(d)){
+    diamond+=d;
+    document.getElementById('diamond').innerText=diamond;
+  }
+};
+</script></body>
 </html>
