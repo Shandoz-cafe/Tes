@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Game Balap Kuda</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <style>
+    html, body {
+      margin: 0; padding: 0; overflow: hidden;
+      background: #2e7d32; font-family: Arial, sans-serif;
+    }
+    canvas { display: block; background: linear-gradient(#4caf50, #2e7d32); }
+    .ui {
+      position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
+      color: #fff; background: rgba(0,0,0,0.4);
+      padding: 8px 16px; border-radius: 20px; font-size: 14px;
+    }
+    .btn {
+      position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+      background: #ff9800; color: #000; font-weight: bold;
+      padding: 14px 28px; border-radius: 30px; border: none; font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div class="ui" id="ui">Tap tombol untuk mulai balapan</div>
+<button class="btn" id="btn">START</button>
+
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const ui = document.getElementById('ui');
+const btn = document.getElementById('btn');
+
+function resize(){ canvas.width = innerWidth; canvas.height = innerHeight; }
+window.onresize = resize; resize();
+
+const FINISH_X = () => canvas.width - 100;
+
+let running = false;
+
+const horses = [
+  { name: 'Kuda Merah', color: '#e53935', y: 150, x: 50, speed: 0 },
+  { name: 'Kuda Biru', color: '#1e88e5', y: 250, x: 50, speed: 0 },
+  { name: 'Kuda Kuning', color: '#fdd835', y: 350, x: 50, speed: 0 },
+  { name: 'Kuda Hitam', color: '#212121', y: 450, x: 50, speed: 0 }
+];
+
+function resetRace() {
+  horses.forEach(h => { h.x = 50; h.speed = 0; });
+  running = false;
+  ui.textContent = 'Tap tombol untuk mulai balapan';
+  btn.textContent = 'START';
+}
+
+btn.onclick = () => {
+  if (!running) {
+    running = true;
+    btn.textContent = 'RESET';
+    ui.textContent = 'Balapan dimulai!';
+  } else {
+    resetRace();
+  }
+};
+
+function update() {
+  if (!running) return;
+
+  horses.forEach(h => {
+    h.speed += Math.random() * 0.4;
+    h.speed *= 0.95;
+    h.x += h.speed;
+
+    if (h.x >= FINISH_X()) {
+      running = false;
+      ui.textContent = `🏆 ${h.name} MENANG!`;
+    }
+  });
+}
+
+function drawTrack() {
+  ctx.fillStyle = '#795548';
+  ctx.fillRect(0, 100, canvas.width, canvas.height - 200);
+
+  ctx.strokeStyle = '#fff';
+  ctx.setLineDash([20, 20]);
+  for (let y = 200; y <= 500; y += 100) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+  }
+  ctx.setLineDash([]);
+
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(FINISH_X(), 100, 5, canvas.height - 200);
+}
+
+function drawHorse(h) {
+  ctx.fillStyle = h.color;
+  ctx.fillRect(h.x, h.y - 20, 60, 40);
+  ctx.fillStyle = '#fff';
+  ctx.font = '14px Arial';
+  ctx.fillText(h.name, h.x + 30, h.y - 30);
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawTrack();
+  horses.forEach(drawHorse);
+}
+
+function loop() {
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+loop();
+</script>
+</body>
+</html>
